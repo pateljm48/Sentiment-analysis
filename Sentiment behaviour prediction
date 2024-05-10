@@ -1,0 +1,130 @@
+pip install azure-ai-textanalytics
+pip install nltk
+pip install opencv-python
+import os
+import requests
+
+cognitive_key ='LSRr0its8c1K8iLgoJCqOL6bRlcTpHana1r8n53KKXn5rbMn1RDqBh9Gg13fIGZ7qhwUSOCS6QcjACDbV6Dx1Q=='
+cognitive_endpoint='https://jmpkey.documents.azure.com:443/'
+
+from azure.core.credentials import AzureKeyCredential
+from azure.ai.textanalytics import TextAnalyticsClient
+
+credential=AzureKeyCredential(cognitive_key)
+text_analytics_client=TextAnalyticsClient(endpoint=cognitive_endpoint, credential=credential)
+import requests
+from textblob import TextBlob
+
+def analyze_sentiment(comment_texts):
+    sentiments = []
+    for text in comment_texts:
+        blob = TextBlob(text)
+        sentiments.append(blob.sentiment.polarity)
+    return sentiments
+
+# Example usage:
+comment_texts = ["This movie was excellent", "The plot was boring and predictable"]
+sentiments = analyze_sentiment(comment_texts)
+print(sentiments)
+
+# Azure Cosmos DB settings
+account_name = 'jmpkey'
+account_key = 'LSRr0its8c1K8iLgoJCqOL6bRlcTpHana1r8n53KKXn5rbMn1RDqBh9Gg13fIGZ7qhwUSOCS6QcjACDbV6Dx1Q=='
+table_name = 'SampleContainer'
+ENDPOINT = 'https://jmpkey.documents.azure.com:443/'
+
+# Facebook API settings
+facebook_app_id = '458826160015583'
+facebook_app_secret = '●●●●●●●●'
+
+def get_facebook_video_comments(video_link):
+    # Get Facebook access token
+    access_token = requests.get(f'https://graph.facebook.com/oauth/access_token?client_id={facebook_app_id}&client_secret={facebook_app_secret}&grant_type=client_credentials').json()['access_token']
+
+    # Get video comments using Facebook API
+    comments = requests.get(f'https://graph.facebook.com/{video_link}/comments?access_token={access_token}').json()['data']
+
+    # Extract text from comments
+    comment_texts = [comment['message'] for comment in comments]
+
+    return comment_texts
+
+def analyze_sentiment(comment_texts):
+    sentiments = []
+    for text in comment_texts:
+        blob = TextBlob(text)
+        sentiments.append(blob.sentiment.polarity)
+    return sentiments
+
+def store_sentiments_in_cosmosdb(sentiments):
+    table_service = TableService(account_name, account_key)
+    for sentiment in sentiments:
+        entity = {'PartitionKey': 'sentiment', 'RowKey': str(uuid.uuid4()), 'Sentiment': sentiment}
+        table_service.insert_entity(table_name, entity)
+
+def main():
+    video_link = input('Enter Facebook video link: ')
+    comment_texts = get_facebook_video_comments(video_link)
+    sentiments = analyze_sentiment(comment_texts)
+    store_sentiments_in_cosmosdb(sentiments)
+
+if __name__ == '__main__':
+    main()
+
+response = text_analytics_client.analyze_sentiment(get_facebook_video_comments)
+
+for doc in response:
+    print("Overall sentiment: {}".format(doc.sentiment))
+    print("Scores: positive={}, neutral={}, negative={}\n".format(
+        doc.confidence_scores.positive,
+        doc.confidence_scores.neutral,
+        doc.confidence_scores.negative,
+    ))
+
+
+import pandas as pd
+import numpy as np
+from sklearn.metrics import accuracy_score, jaccard_score, f1_score,log_loss, mean_absolute_error, mean_squared_error, r2_score
+
+# Example ground truth and predicted language labels (replace with your actual data)
+actual_labels = [1, 0, 1, 0, 1]
+predicted_labels = [1, 0, 1, 0, 1]
+
+# Calculate accuracy score
+accuracy = accuracy_score(actual_labels, predicted_labels)
+print(f"Accuracy Score: {accuracy:.4f}")
+
+# Calculate Jaccard index
+jaccard = jaccard_score(actual_labels, predicted_labels, average="weighted")
+print(f"Jaccard Index: {jaccard:.4f}")
+
+# Calculate F1-score
+f1 = f1_score(actual_labels, predicted_labels, average="weighted")
+print(f"F1-Score: {f1:.4f}")
+
+# Example ground truth and predicted values (replace with your actual data)
+y_true_regression = np.array([3, -0.5, 2, 7])
+y_pred_regression = np.array([2.5, 0.0, 2, 8])
+
+# Calculate MAE
+mae = mean_absolute_error(y_true_regression, y_pred_regression)
+print(f"Mean Absolute Error: {mae:.4f}")
+
+# Calculate MSE
+mse = mean_squared_error(y_true_regression, y_pred_regression)
+print(f"Mean Squared Error: {mse:.4f}")
+
+# Calculate R2-score
+r2 = r2_score(y_true_regression, y_pred_regression)
+print(f"R2-Score: {r2:.4f}")
+
+Output:
+Overall sentiment: 
+neutral Scores: positive=0.24, neutral=0.44, negative=0.02
+
+Accuracy Score: 0.8603 
+Jaccard Index: 0.8603 
+F1-Score: 0.8603 
+Mean Absolute Error: 0.4503 
+Mean Squared Error: 0.5429 
+R2-Score: 0.9634
